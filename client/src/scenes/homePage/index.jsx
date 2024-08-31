@@ -9,7 +9,14 @@ import FriendListWidget from "scenes/widgets/FriendListWidget";
 
 const HomePage = () => {
   const isNonMobileScreens = useMediaQuery("(min-width:1000px)");
-  const { _id, picturePath } = useSelector((state) => state.user || "");
+  //to handel the useSelector problem
+  const user = useSelector((state) => state.user);
+
+  if (!user) {
+    return <div>Loading...</div>; // Handle loading state or redirect to login
+  }
+
+  const { _id, picturePath } = user;
 
   return (
     <Box>
@@ -25,7 +32,7 @@ const HomePage = () => {
           <UserWidget userId={_id} picturePath={picturePath} />
         </Box>
         <Box
-          flexBasis={isNonMobileScreens ? "42%" : undefined}
+          flexBasis={isNonMobileScreens ? "42%": undefined}
           mt={isNonMobileScreens ? undefined : "2rem"}
         >
           <MyPostWidget picturePath={picturePath} />
