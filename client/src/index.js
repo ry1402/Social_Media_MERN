@@ -1,28 +1,25 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import './index.css';
-import App from './App';
-import reportWebVitals from './reportWebVitals';
-import authReducer from "./state";
 import { configureStore } from "@reduxjs/toolkit";
+import React from "react";
+import ReactDOM from "react-dom/client";
 import { Provider } from "react-redux";
 import {
-  persistStore,
-  persistReducer,
   FLUSH,
-  REHYDRATE,
   PAUSE,
   PERSIST,
+  persistReducer,
+  persistStore,
   PURGE,
   REGISTER,
+  REHYDRATE,
 } from "redux-persist";
+import { PersistGate } from "redux-persist/es/integration/react";
 import storage from "redux-persist/lib/storage";
-import { PersistGate } from "redux-persist/integration/react";
-
+import App from "./App";
+import "./index.css";
+import authReducer from "./state";
 
 const persistConfig = { key: "root", storage, version: 1 };
 const persistedReducer = persistReducer(persistConfig, authReducer);
-
 const store = configureStore({
   reducer: persistedReducer,
   middleware: (getDefaultMiddleware) =>
@@ -33,8 +30,7 @@ const store = configureStore({
     }),
 });
 
-
-const root = ReactDOM.createRoot(document.getElementById('root'));
+const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
     <Provider store={store}>
@@ -44,8 +40,3 @@ root.render(
     </Provider>
   </React.StrictMode>
 );
-
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();

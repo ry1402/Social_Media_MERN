@@ -1,112 +1,95 @@
-import {
-  ChatBubbleOutlineOutlined,
-  FavoriteBorderOutlined,
-  FavoriteOutlined,
-  ShareOutlined,
-} from "@mui/icons-material";
-import { Box, Divider, IconButton, Typography, useTheme } from "@mui/material";
-import FlexBetween from "components/FlexBetween";
-import Friend from "components/Friend";
-import WidgetWrapper from "components/WidgetWrapper";
-import { useState } from "react";
+import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { setPost } from "state";
+import { setPosts } from "state";
+import PostWidget from "./PostWidget";
 
-const PostWidget = ({
-  postId,
-  postUserId,
-  name,
-  description,
-  location,
-  picturePath,
-  userPicturePath,
-  likes,
-  comments,
-}) => {
-  const [isComments, setIsComments] = useState(false);
+const PostsWidget = ({ userId, isProfile = false }) => {
   const dispatch = useDispatch();
+  const posts = useSelector((state) => state.posts);
   const token = useSelector((state) => state.token);
-  const loggedInUserId = useSelector((state) => state.user._id);
-  const isLiked = Boolean(likes[loggedInUserId]);
-  const likeCount = Object.keys(likes).length;
 
-  const { palette } = useTheme();
-  const main = palette.neutral.main;
-  const primary = palette.primary.main;
 
-  const patchLike = async () => {
-    const response = await fetch(`http://localhost:3001/posts/${postId}/like`, {
-      method: "PATCH",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ userId: loggedInUserId }),
-    });
-    const updatedPost = await response.json();
-    dispatch(setPost({ post: updatedPost }));
+//code change here for debugging
+  const getPosts = async () => {
+    try {
+      const response = await fetch("http://localhost:3001/posts", {
+        method: "GET",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await response.json();
+      if (Array.isArray(data)) {
+        dispatch(setPosts({ posts: data }));
+      } else {
+        console.error("Fetched data is not an array", data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch posts", error);
+    }
   };
 
+  const getUserPosts = async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:3001/posts/${userId}/posts`,
+        {
+          method: "GET",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      const data = await response.json();
+      if (Array.isArray(data)) {
+        dispatch(setPosts({ posts: data }));
+      } else {
+        console.error("Fetched data is not an array", data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch user posts", error);
+    }
+  };
+
+  useEffect(() => {
+    if (isProfile) {
+      getUserPosts();
+    } else {
+      getPosts();
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
-    <WidgetWrapper m="2rem 0">
-      <Friend
-        friendId={postUserId}
-        name={name}
-        subtitle={location}
-        userPicturePath={userPicturePath}
-      />
-      <Typography color={main} sx={{ mt: "1rem" }}>
-        {description}
-      </Typography>
-      {picturePath && (
-        <img
-          width="100%"
-          height="auto"
-          alt="post"
-          style={{ borderRadius: "0.75rem", marginTop: "0.75rem" }}
-          src={`http://localhost:3001/assets/${picturePath}`}
-        />
+    <>
+      {Array.isArray(posts) && posts.length > 0 ? (
+        posts.map(
+          ({
+            _id,
+            userId,
+            firstName,
+            lastName,
+            description,
+            location,
+            picturePath,
+            userPicturePath,
+            likes,
+            comments,
+          }) => (
+            <PostWidget
+              key={_id}
+              postId={_id}
+              postUserId={userId}
+              name={`${firstName} ${lastName}`}
+              description={description}
+              location={location}
+              picturePath={picturePath}
+              userPicturePath={userPicturePath}
+              likes={likes}
+              comments={comments}
+            />
+          )
+        )
+      ) : (
+        <p>No posts available</p>
       )}
-      <FlexBetween mt="0.25rem">
-        <FlexBetween gap="1rem">
-          <FlexBetween gap="0.3rem">
-            <IconButton onClick={patchLike}>
-              {isLiked ? (
-                <FavoriteOutlined sx={{ color: primary }} />
-              ) : (
-                <FavoriteBorderOutlined />
-              )}
-            </IconButton>
-            <Typography>{likeCount}</Typography>
-          </FlexBetween>
-
-          <FlexBetween gap="0.3rem">
-            <IconButton onClick={() => setIsComments(!isComments)}>
-              <ChatBubbleOutlineOutlined />
-            </IconButton>
-            <Typography>{comments.length}</Typography>
-          </FlexBetween>
-        </FlexBetween>
-
-        <IconButton>
-          <ShareOutlined />
-        </IconButton>
-      </FlexBetween>
-      {isComments && (
-        <Box mt="0.5rem">
-          {comments.map((comment, i) => (
-            <Box key={`${name}-${i}`}>
-              <Divider />
-              <Typography sx={{ color: main, m: "0.5rem 0", pl: "1rem" }}>
-                {comment}
-              </Typography>
-            </Box>
-          ))}
-          <Divider />
-        </Box>
-      )}
-    </WidgetWrapper>
+    </>
   );
 };
 
-export default PostWidget;
+export default PostsWidget;
